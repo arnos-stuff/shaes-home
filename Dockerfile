@@ -73,6 +73,14 @@ RUN git clone https://github.com/arnos-stuff/starship-themes starship
 RUN cp starship/g-g-go.toml /home/${LUSER}/.config/starship.toml
 COPY shell/zsh/shae-ubuntu-zshenv /home/${LUSER}/.zshenv
 COPY shell/apps/micro/ /home/${LUSER}/.config/micro/
-WORKDIR /home/${LUSER}/
 
-ENTRYPOINT ["/bin/zsh", "-i", "-l"]
+# minio DL
+
+RUN wget https://dl.min.io/server/minio/release/linux-amd64/minio
+RUN chmod +x minio
+RUN sudo mv minio /usr/local/bin/
+RUN mkdir ~/minio
+EXPOSE 9000
+EXPOSE 9090
+CMD ["minio", "server", "~/minio", "--console-address", ":9090"]
+
