@@ -2,10 +2,10 @@ FROM phusion/baseimage:latest-amd64
 
 RUN install_clean \
  build-essential rsync file curl time wget git git-lfs tmux zsh sudo neovim unzip httpie iputils-ping \
- software-properties-common cmake make gcc g++ 
+ software-properties-common cmake make gcc g++ iproute2
 
 # user setup
-ARG luser=shae
+ARG luser=twteconpol
 ENV LUSER=${luser}
 ENV TERM=xterm-256color
 
@@ -36,7 +36,7 @@ RUN chown -R $CONTAINER_USER: /home/linuxbrew/.linuxbrew/Cellar
 ENV BREW_ROOT=/home/linuxbrew/.linuxbrew
 RUN ${BREW_ROOT}/bin/brew install starship zoxide fzf fd micro nvm
 
-ENV NVM_DIR=${BREW_ROOT}/opt/nvm/
+ENV NVM_DIR=${BREW_ROOT}/opt/nvm
 
 RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.1.5/zsh-in-docker.sh)" -- \
     -p brew -p git -p sudo \
@@ -73,6 +73,29 @@ RUN git clone https://github.com/arnos-stuff/starship-themes starship
 RUN cp starship/g-g-go.toml /home/${LUSER}/.config/starship.toml
 COPY shell/zsh/shae-ubuntu-zshenv /home/${LUSER}/.zshenv
 COPY shell/apps/micro/ /home/${LUSER}/.config/micro/
+
+RUN [ -s "$NVM_DIR/nvm.sh" ] && cat $NVM_DIR/nvm.sh | sh -
+RUN [ -s "$NVM_DIR/bash_completion" ] && cat $NVM_DIR/bash_completion | sh -
+
+USER root
+RUN nvm install 16
+
+RUN curl -f https://get.pnpm.io/v6.16.js | node - add --global pnpm
+
+RUN pnpm install -g pnpm
+
+RUN brew install gh
+
+RUN pnpm install -g \
+    npm-check-updates \
+    npm-upgrade \
+    npm-upgrade-all \
+    npm-upgrade-safe \
+    npm-upgrade-safe-interactive \
+    npm-upgrade-interactive
+
 WORKDIR /home/${LUSER}/
+
+COPY shell/scripts/builder.sh /home/${LUSER}/builder.sh
 
 ENTRYPOINT ["/bin/zsh", "-i", "-l"]
